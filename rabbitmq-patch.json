@@ -1,0 +1,19 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "rabbitmq",
+            "livenessProbe": {
+              "timeoutSeconds": 5
+            },
+            "readinessProbe": {
+              "timeoutSeconds": 5
+            }
+          }
+        ]
+      }
+    }
+  }
+}
