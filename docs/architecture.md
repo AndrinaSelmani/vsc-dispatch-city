@@ -50,3 +50,35 @@ Der Order Worker ist der einzige Schreiber des fachlichen Zustands. Er verarbeit
 4. Transaktion committen und erst danach die RabbitMQ-Nachricht bestätigen.
 
 Die Anwendungen verwenden den von CloudNativePG verwalteten `food-delivery-db-rw`-Service. Dieser zeigt nach einem Failover automatisch auf den neuen Primary.
+
+## Block 7: Resilienz, Skalierung und Observability
+
+Im letzten Ausbauschritt wurde das Verhalten der Anwendung im laufenden Betrieb untersucht.
+
+### Readiness
+
+Bei einem simulierten Readiness-Ausfall blieb der betroffene Pod zwar im Zustand `Running`, wechselte jedoch von `1/1` auf `0/1`. Kubernetes entfernte den nicht bereiten Pod aus den erreichbaren Endpoints. Der zweite Pod blieb weiterhin verfügbar.
+
+### Fehlerhaftes Deployment
+
+Für die Simulation eines fehlerhaften Updates wurde absichtlich das ungültige Image `nginx:absichtlich-falsch` verwendet. Der neue Pod wechselte dadurch in den Zustand `ErrImagePull` beziehungsweise `ImagePullBackOff`.
+
+Die bestehenden funktionsfähigen Pods blieben weiterhin verfügbar. Mit `kubectl rollout undo` wurde anschliessend der vorherige funktionierende Stand wiederhergestellt.
+
+### Horizontal Pod Autoscaler
+
+Mit dem Horizontal Pod Autoscaler wurde die automatische Skalierung unter Last getestet. Die CPU-Auslastung stieg während des Tests deutlich an. Kubernetes skalierte die Anwendung automatisch von zwei auf vier Replicas.
+
+Nach Ende der Last sank die CPU-Auslastung wieder und die Anzahl Replicas wurde automatisch auf zwei reduziert.
+
+### Monitoring mit Grafana
+
+Grafana wurde für die Beobachtung des Systems verwendet. Das Dashboard `Dispatch City – Betrieb` zeigt unter anderem:
+
+- offene Bestellungen
+- gelieferte Bestellungen
+- verfügbare Worker
+- wartende RabbitMQ-Nachrichten
+- verarbeitete Events pro Sekunde
+
+Damit können sowohl der Zustand der Anwendung als auch Veränderungen unter Last beobachtet werden.
